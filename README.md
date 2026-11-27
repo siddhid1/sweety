@@ -208,9 +208,17 @@ Empty range → `count: 0`, nulls for high/low/avg (never misleading zeros) + fr
 
 ## Demo Login Credentials
 
-| Email | Password |
-|-------|----------|
-| demo@example.com | Demo@12345 |
+| Email | Password | Data |
+|-------|----------|------|
+| demo@example.com | Demo@12345 | 13 curated readings (Nov/Oct/Sep 2026) |
+| anaya@example.com | Demo@12345 | ~135 readings, 45 days |
+| rahul@example.com | Demo@12345 | ~135 readings, 45 days |
+| priya@example.com | Demo@12345 | ~140 readings, 45 days |
+| arjun@example.com | Demo@12345 | ~90 readings, 30 days |
+| kavya@example.com | Demo@12345 | ~90 readings, 30 days |
+
+All seeded users share the password `Demo@12345`. Re-run `npm run db:seed` any time —
+it upserts, so it never duplicates users or readings.
 
 ## Screenshots
 
