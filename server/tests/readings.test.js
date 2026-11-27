@@ -148,4 +148,26 @@ describe('Reading validation', () => {
       .set(authHeader(token));
     expect(res.status).toBe(200);
   });
+
+  test('12. Time-slot filter returns only matching readings', async () => {
+    const { token } = await authUser();
+    await request(app)
+      .post('/api/readings')
+      .set(authHeader(token))
+      .send({ readingDate: TODAY, timeSlot: 'MORNING', value: 100 });
+    await request(app)
+      .post('/api/readings')
+      .set(authHeader(token))
+      .send({ readingDate: TODAY, timeSlot: 'AFTER_DINNER', value: 160 });
+    const res = await request(app)
+      .get('/api/readings?timeSlot=AFTER_DINNER')
+      .set(authHeader(token));
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].timeSlot).toBe('AFTER_DINNER');
+    const bad = await request(app)
+      .get('/api/readings?timeSlot=SNACK')
+      .set(authHeader(token));
+    expect(bad.status).toBe(400);
+  });
 });

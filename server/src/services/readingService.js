@@ -4,6 +4,7 @@ const {
   toReadingDTO,
   slotLabel,
   SLOT_ORDER,
+  ALLOWED_SLOTS,
 } = require('../validators/readingValidator');
 
 function toDateOnly(iso) {
@@ -51,11 +52,17 @@ async function createReading(userId, input) {
   }
 }
 
-async function listReadings(userId, { page, limit } = {}) {
+async function listReadings(userId, { page, limit, timeSlot } = {}) {
   const hasPagination = page !== undefined || limit !== undefined;
+  if (timeSlot !== undefined && !ALLOWED_SLOTS.includes(timeSlot)) {
+    const err = new Error('Invalid time slot.');
+    err.statusCode = 400;
+    throw err;
+  }
+  const where = timeSlot ? { userId, timeSlot } : { userId };
   const orderBy = [{ readingDate: 'desc' }, { createdAt: 'desc' }];
   if (!hasPagination) {
-    const rows = await prisma.reading.findMany({ where: { userId }, orderBy });
+    const rows = await prisma.reading.findMany({ where, orderBy });
     const sorted = rows.map(toReadingDTO).sort((a, b) => {
       if (a.readingDate !== b.readingDate) return b.readingDate.localeCompare(a.readingDate);
       return SLOT_ORDER[a.timeSlot] - SLOT_ORDER[b.timeSlot];
@@ -65,9 +72,9 @@ async function listReadings(userId, { page, limit } = {}) {
   const p = Math.max(1, parseInt(page || '1', 10) || 1);
   const l = Math.min(100, Math.max(1, parseInt(limit || '20', 10) || 20));
   const [total, rows] = await Promise.all([
-    prisma.reading.count({ where: { userId } }),
+    prisma.reading.count({ where }),
     prisma.reading.findMany({
-      where: { userId },
+      where,
       orderBy,
       skip: (p - 1) * l,
       take: l,

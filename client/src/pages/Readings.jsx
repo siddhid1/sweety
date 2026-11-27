@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import api, { slotLabel, rangeColor } from '../services/api';
+import { useCallback, useEffect, useState } from 'react';
+import api, { SLOT_OPTIONS, slotLabel, rangeColor } from '../services/api';
 import ReadingForm from '../components/ReadingForm';
 import EmptyState from '../components/EmptyState';
 
@@ -7,25 +7,37 @@ export default function Readings() {
   const [readings, setReadings] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [page, setPage] = useState(1);
+  const [slotFilter, setSlotFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [notice, setNotice] = useState('');
 
-  async function fetchPage(p = 1) {
-    setLoading(true);
-    try {
-      const { data } = await api.get(`/readings?page=${p}&limit=20`);
-      setReadings(data.data || []);
-      setPagination(data.pagination || null);
-      setPage(p);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const fetchPage = useCallback(
+    async (p = 1, slot = slotFilter) => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({ page: String(p), limit: '20' });
+        if (slot) params.set('timeSlot', slot);
+        const { data } = await api.get(`/readings?${params.toString()}`);
+        setReadings(data.data || []);
+        setPagination(data.pagination || null);
+        setPage(p);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [slotFilter]
+  );
 
   useEffect(() => {
     fetchPage(1);
-  }, []);
+  }, [fetchPage]);
+
+  function handleFilterChange(e) {
+    const slot = e.target.value;
+    setSlotFilter(slot);
+    fetchPage(1, slot);
+  }
 
   async function handleDelete(id) {
     if (!window.confirm('Delete this reading?')) return;
@@ -37,7 +49,24 @@ export default function Readings() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
-      <h1 className="text-2xl font-semibold">All readings</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold">All readings</h1>
+        <label className="flex items-center gap-2 text-sm text-slate-600">
+          Filter by slot
+          <select
+            value={slotFilter}
+            onChange={handleFilterChange}
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white"
+          >
+            <option value="">All slots</option>
+            {SLOT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       {notice && <p className="text-sm text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2">{notice}</p>}
       {editing && (
         <ReadingForm

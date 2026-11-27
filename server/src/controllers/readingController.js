@@ -7,8 +7,8 @@ async function create(req, res) {
 }
 
 async function list(req, res) {
-  const { page, limit } = req.query;
-  const result = await readingService.listReadings(req.user.id, { page, limit });
+  const { page, limit, timeSlot } = req.query;
+  const result = await readingService.listReadings(req.user.id, { page, limit, timeSlot });
   res.json({ success: true, ...result });
 }
 
