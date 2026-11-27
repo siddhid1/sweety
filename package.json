@@ -1,0 +1,23 @@
+{
+  "name": "sweety-blood-glucose-tracker",
+  "version": "1.0.0",
+  "description": "Sweety – Blood Glucose Tracker: record, manage and monitor daily blood glucose readings.",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "build:client": "npm run build --prefix client",
+    "test:server": "npm test --prefix server",
+    "db:migrate": "npm run db:migrate --prefix server",
+    "db:seed": "npm run db:seed --prefix server"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Env & secrets
+.env
+.env.local
+.env.*.local
+server/.env
+server/.env.test
+client/.env
+client/.env.local
+
+# Build output
+client/dist/
+client/build/
+server/dist/
+
+# Logs & coverage
+*.log
+logs/
+coverage/
+.nyc_output/
+
+# Prisma
+server/prisma/migrations/**/migration.sql.lock
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Local-only assignment notes (do not push)
+docs/
+
+# Misc
+screenshots/*.png
+!screenshots/.gitkeep
+tmp/

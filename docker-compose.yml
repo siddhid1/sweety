@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: sweety-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sweety
+      POSTGRES_PASSWORD: sweety123
+      POSTGRES_DB: sweety
+    ports:
+      - "5433:5432"
+    volumes:
+      - sweety-pgdata:/var/lib/postgresql/data
+
+volumes:
+  sweety-pgdata:
