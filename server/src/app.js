@@ -15,7 +15,12 @@ function createApp() {
   const app = express();
 
   app.use(helmet());
-  app.use(cors({ origin: env.clientUrl, credentials: true }));
+  app.use(
+    cors({
+      origin: env.clientOrigins,
+      credentials: true,
+    })
+  );
   app.use(express.json({ limit: '100kb' }));
   if (env.nodeEnv !== 'test') app.use(morgan('dev'));
 

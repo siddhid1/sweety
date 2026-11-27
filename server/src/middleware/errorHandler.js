@@ -1,8 +1,11 @@
 // eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
   if (process.env.NODE_ENV !== 'test') {
-    // eslint-disable-next-line no-console
-    console.error(err);
+    const status = err.statusCode || err.status || 500;
+    if (status >= 500) {
+      // eslint-disable-next-line no-console
+      console.error(err);
+    }
   }
 
   // Prisma unique-constraint violation (e.g. duplicate slot per day)

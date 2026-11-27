@@ -38,6 +38,4 @@ Thumbs.db
 docs/
 
 # Misc
-screenshots/*.png
-!screenshots/.gitkeep
 tmp/
