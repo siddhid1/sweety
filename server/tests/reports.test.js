@@ -66,4 +66,20 @@ describe('Reports', () => {
     const res = await request(app).get('/api/reports/daily?date=2026-10-15').set(authHeader(b.token));
     expect(res.body.data.count).toBe(0);
   });
+
+  test('7. Time-slot filter narrows stats and readings', async () => {
+    const { token } = await authUser();
+    await request(app).post('/api/readings').set(authHeader(token)).send({ readingDate: '2026-10-15', timeSlot: 'MORNING', value: 100 });
+    await request(app).post('/api/readings').set(authHeader(token)).send({ readingDate: '2026-10-15', timeSlot: 'AFTER_DINNER', value: 170 });
+    const res = await request(app).get('/api/reports/daily?date=2026-10-15&timeSlot=MORNING').set(authHeader(token));
+    expect(res.status).toBe(200);
+    expect(res.body.data.count).toBe(1);
+    expect(res.body.data.highest).toBe(100);
+    expect(res.body.data.readings).toHaveLength(1);
+    expect(res.body.data.readings[0].timeSlot).toBe('MORNING');
+    const mtd = await request(app).get('/api/reports/month-to-date?date=2026-10-15&timeSlot=MORNING').set(authHeader(token));
+    expect(mtd.body.data.count).toBe(1);
+    const bad = await request(app).get('/api/reports/daily?date=2026-10-15&timeSlot=SNACK').set(authHeader(token));
+    expect(bad.status).toBe(400);
+  });
 });

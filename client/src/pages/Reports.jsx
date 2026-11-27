@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import api, { todayISO } from '../services/api';
+import api, { SLOT_OPTIONS, todayISO } from '../services/api';
 import StatCard from '../components/StatCard';
 import EmptyState from '../components/EmptyState';
 
@@ -21,20 +21,23 @@ const TABS = [
 export default function Reports() {
   const [tab, setTab] = useState(TABS[0]);
   const [date, setDate] = useState(todayISO());
+  const [slotFilter, setSlotFilter] = useState('');
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchReport = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await api.get(`/reports/${tab.endpoint}?date=${date}`);
+      const params = new URLSearchParams({ date });
+      if (slotFilter) params.set('timeSlot', slotFilter);
+      const { data } = await api.get(`/reports/${tab.endpoint}?${params.toString()}`);
       setReport(data.data);
     } catch {
       setReport(null);
     } finally {
       setLoading(false);
     }
-  }, [tab, date]);
+  }, [tab, date, slotFilter]);
 
   useEffect(() => {
     fetchReport();
@@ -49,13 +52,30 @@ export default function Reports() {
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Reports</h1>
-        <input
-          type="date"
-          max={todayISO()}
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            Slot
+            <select
+              value={slotFilter}
+              onChange={(e) => setSlotFilter(e.target.value)}
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white"
+            >
+              <option value="">All slots</option>
+              {SLOT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <input
+            type="date"
+            max={todayISO()}
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          />
+        </div>
       </div>
 
       <div className="flex gap-2">

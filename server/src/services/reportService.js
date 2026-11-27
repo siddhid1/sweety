@@ -1,5 +1,5 @@
 const prisma = require('../config/prisma');
-const { toReadingDTO, isValidCalendarDate } = require('../validators/readingValidator');
+const { toReadingDTO, isValidCalendarDate, ALLOWED_SLOTS } = require('../validators/readingValidator');
 
 function requireValidDate(date) {
   if (!date || !isValidCalendarDate(date)) {
@@ -51,33 +51,40 @@ function summarize(rows) {
   };
 }
 
-async function fetchRange(userId, startISO, endISO) {
+async function fetchRange(userId, startISO, endISO, timeSlot) {
+  if (timeSlot !== undefined && !ALLOWED_SLOTS.includes(timeSlot)) {
+    const err = new Error('Invalid time slot.');
+    err.statusCode = 400;
+    throw err;
+  }
+  const where = {
+    userId,
+    readingDate: { gte: parseDateUTC(startISO), lte: parseDateUTC(endISO) },
+    ...(timeSlot ? { timeSlot } : {}),
+  };
   return prisma.reading.findMany({
-    where: {
-      userId,
-      readingDate: { gte: parseDateUTC(startISO), lte: parseDateUTC(endISO) },
-    },
+    where,
     orderBy: [{ readingDate: 'asc' }, { createdAt: 'asc' }],
   });
 }
 
-async function dailyReport(userId, date) {
+async function dailyReport(userId, date, timeSlot) {
   requireValidDate(date);
-  const rows = await fetchRange(userId, date, date);
+  const rows = await fetchRange(userId, date, date, timeSlot);
   return { date, dateRange: { start: date, end: date }, ...summarize(rows) };
 }
 
-async function monthToDateReport(userId, date) {
+async function monthToDateReport(userId, date, timeSlot) {
   requireValidDate(date);
   const start = `${date.slice(0, 7)}-01`;
-  const rows = await fetchRange(userId, start, date);
+  const rows = await fetchRange(userId, start, date, timeSlot);
   return { date, dateRange: { start, end: date }, ...summarize(rows) };
 }
 
-async function monthlyReport(userId, date) {
+async function monthlyReport(userId, date, timeSlot) {
   requireValidDate(date);
   const { start, end } = prevMonthRange(date);
-  const rows = await fetchRange(userId, start, end);
+  const rows = await fetchRange(userId, start, end, timeSlot);
   return { date, dateRange: { start, end }, ...summarize(rows) };
 }
 
