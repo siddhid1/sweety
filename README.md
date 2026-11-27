@@ -1,252 +1,80 @@
 # Sweety – Blood Glucose Tracker
 
-A full-stack web application that helps diabetes patients securely record, manage, and monitor
-their daily blood glucose readings — up to four readings per day across four time slots
-(Morning fasting, After breakfast, After lunch, After dinner) — with daily and monthly reports.
-
-Built for the **Kenpath Junior Full Stack Developer (JavaScript & AI)** assignment
-(MERN + PostgreSQL stack).
-
-## Problem Statement
-
-Patients need a simple, reliable way to log blood sugar values (mg/dl), review the day at a
-glance, and look back at trends across the month. Sweety provides JWT-authenticated,
-per-user CRUD for readings with strict business validations enforced on both frontend and
-backend (authoritative), plus daily / month-to-date / previous-month reports.
+Track daily blood glucose readings (up to 4/day across 4 time slots) with daily and monthly reports. Built for the Kenpath Junior Full Stack Developer assignment (React + Express + PostgreSQL).
 
 ## Features
 
-- **Authentication** — register, login, persisted session, logout; bcrypt-hashed passwords; JWT.
-- **Readings CRUD** — add / view / edit / delete your own readings only; date picker, slot
-  dropdown, value input; sorted by date (desc) then slot order; paginated list (`?page&limit`).
-- **Business validations (frontend + backend)** with exact required messages:
-  - Empty value → `Please enter a glucose value.`
-  - Not a whole number in 40–600 → `Value must be between 40 and 600 mg/dl.`
-  - Duplicate slot on a date → `You already have an After lunch reading for this date.`
-    (+ PostgreSQL `UNIQUE(user_id, reading_date, time_slot)`)
-  - More than 4 readings/day → `You can add only 4 readings per day.`
-  - Future date → `Date cannot be in the future.`
-- **Reports** — highest / lowest / average (1 decimal) / count + date range, for:
-  Daily (selected date), Month-to-date (1st → selected date), Previous month
-  (full prior calendar month, leap/year-boundary safe). Friendly empty state, user-isolated.
-- **Dashboard** — welcome message, selected date, 4 stat cards, quick add-reading form,
-  daily readings list with range color badges (low / in-range / elevated).
-- **Reports page** — three tabs + reference-date picker + Recharts glucose trend line.
+- JWT auth (register / login / logout) with bcrypt hashing
+- Readings CRUD, strictly per-user, with pagination and time-slot filter
+- Business rules enforced frontend + backend: required value, whole number 40–600 mg/dl, one reading per slot/day, max 4/day, no future dates, DB unique + check constraints
+- Reports: daily, month-to-date, previous month — high / low / average (1 decimal) / count, Recharts trend, slot filter, friendly empty state
 
-## Technology Stack
+## Tech Stack
 
-| Layer    | Tech |
-|----------|------|
-| Frontend | React 19, Vite, JavaScript (ES6+), Tailwind CSS, React Router DOM, Axios, Recharts |
-| Backend  | Node.js, Express.js, JWT, bcryptjs, Prisma ORM |
-| Database | PostgreSQL 18 |
-| Testing  | Jest, Supertest (21 backend tests) |
-| Tools    | Docker Compose (Postgres), ESLint-ready, Postman-friendly REST |
+React 19 · Vite · Tailwind · React Router · Axios · Recharts — Express · Prisma · PostgreSQL 18 · JWT · bcryptjs — Jest · Supertest — Docker Compose (Postgres)
 
-## Project Architecture
-
-```
-.
-├── client/                  # React + Vite frontend
-│   ├── src/
-│   │   ├── components/      # Navbar, ProtectedRoute, StatCard, ReadingForm, EmptyState
-│   │   ├── pages/           # Login, Register, Dashboard, Readings, Reports
-│   │   ├── context/         # AuthContext (token persistence, /me restore)
-│   │   ├── services/        # api.js (Axios instance + interceptors + slot helpers)
-│   │   ├── App.jsx main.jsx index.css
-│   └── package.json
-├── server/                  # Express API
-│   ├── prisma/
-│   │   ├── schema.prisma    # User + Reading models, unique(user,date,slot)
-│   │   ├── migrations/      # incl. readings_value_check (40–600)
-│   │   └── seed.js          # idempotent demo seed
-│   ├── src/
-│   │   ├── config/          # prisma client (test-DB aware), env
-│   │   ├── controllers/     # thin: auth, reading, report
-│   │   ├── services/        # business logic: auth, reading, report
-│   │   ├── validators/      # readingValidator (all 5 rules, exact messages)
-│   │   ├── middleware/      # auth (JWT), errorHandler (central, safe messages)
-│   │   ├── routes/          # authRoutes, readingRoutes, reportRoutes
-│   │   ├── app.js server.js
-│   └── tests/               # auth, readings, reports (+ setup)
-├── screenshots/
-├── docker-compose.yml       # local Postgres
-├── .env.example
-└── README.md
-```
-
-## Prerequisites
-
-- Node.js ≥ 18, npm ≥ 9
-- PostgreSQL 14+ (or Docker), e.g. `docker compose up -d`
-
-## Installation
+## Quickstart
 
 ```bash
-git clone https://github.com/siddhid1/sweety.git
-cd sweety
-npm install --prefix server
-npm install --prefix client
+git clone https://github.com/siddhid1/sweety.git && cd sweety
+
+# 1. Database
+docker compose up -d                                   # Postgres on :5433
+
+# 2. Backend (http://localhost:5000)
+cp .env.example server/.env                            # then fill in secrets
+cd server && npm install && npx prisma migrate deploy && npm run db:seed && npm run dev
+
+# 3. Frontend (http://localhost:5173)
+cd client && npm install && npm run dev                # set VITE_API_URL in client/.env
+
+# 4. Tests (separate sweety_test DB, dev data untouched)
+cd server && npm test                                  # 23 tests
 ```
 
-## PostgreSQL Database Setup
+`server/.env` needs `DATABASE_URL`, `DATABASE_URL_TEST`, `JWT_SECRET`, `PORT`, `CLIENT_URL`/`CLIENT_URLS`. See `.env.example`. Never commit real secrets.
 
-**Option A — Docker (recommended):**
+## Demo Accounts
 
-```bash
-docker compose up -d
-# Postgres at localhost:5433, user/password/db: sweety/sweety123/sweety
-```
+Password for all: `Demo@12345`
 
-**Option B — local Postgres:** create databases `sweety` and `sweety_test`, then point
-`DATABASE_URL` / `DATABASE_URL_TEST` at them.
+| Email | Data |
+|---|---|
+| demo@example.com | 13 curated readings |
+| anaya / rahul / priya / arjun / kavya @example.com | ~90–140 readings each over 30–45 days |
 
-## Environment Variable Setup
+Re-run `npm run db:seed` anytime — it upserts, never duplicates.
 
-```bash
-cp .env.example server/.env
-cp client/.env.example client/.env   # or set VITE_API_URL in your shell
-```
+## API
 
-Backend (`server/.env`):
+Base `http://localhost:5000/api` · protected routes take `Authorization: Bearer <JWT>` · errors are `{ success: false, message }`.
 
-```
-DATABASE_URL="postgresql://sweety:sweety123@localhost:5433/sweety?schema=public"
-DATABASE_URL_TEST="postgresql://sweety:sweety123@localhost:5433/sweety_test?schema=public"
-JWT_SECRET="change-me-to-a-long-random-secret-min-32-chars"
-JWT_EXPIRES_IN="7d"
-PORT=5000
-NODE_ENV="development"
-CLIENT_URL="http://localhost:5173"
-CLIENT_URLS="http://localhost:5173,http://localhost:4173"   # comma-separated allowed origins
-```
+| Method | Endpoint | Notes |
+|---|---|---|
+| POST | `/api/auth/register` | `{ name, email, password }` → `{ user, token }` |
+| POST | `/api/auth/login` | `{ email, password }` → `{ user, token }` |
+| GET | `/api/auth/me` | current user |
+| GET | `/api/readings?page&limit&timeSlot` | own readings, newest first |
+| POST | `/api/readings` | `{ readingDate: "2026-10-15", timeSlot: "AFTER_LUNCH", value: 145 }` |
+| GET / PUT / DELETE | `/api/readings/:id` | 404 unless yours |
+| GET | `/api/reports/daily?date&timeSlot` | stats + readings for the day |
+| GET | `/api/reports/month-to-date?date&timeSlot` | stats for 1st → date |
+| GET | `/api/reports/monthly?date&timeSlot` | stats for full previous month |
 
-Frontend (`client/.env`): `VITE_API_URL="http://localhost:5000/api"`
-
-## Prisma Migration Instructions
-
-```bash
-cd server
-npx prisma migrate deploy   # or: npx prisma migrate dev (creates a migration)
-```
-
-The second migration adds the DB-level glucose range guard:
-`ALTER TABLE "readings" ADD CONSTRAINT "readings_value_check" CHECK ("value" >= 40 AND "value" <= 600);`
-
-## Seed Script Instructions
-
-```bash
-cd server
-npm run db:seed
-```
-
-Idempotent (`upsert`): creates/updates demo user **demo@example.com / Demo@12345**
-with 13 sample readings spanning Nov 2026, Oct 2026 and Sep 2026. Safe to re-run.
-
-## How to Start the Backend
-
-```bash
-cd server
-npm run dev     # watch mode → http://localhost:5000 (GET /health)
-# production: npm start
-```
-
-## How to Start the Frontend
-
-```bash
-cd client
-npm run dev     # → http://localhost:5173
-# production preview: npm run build && npm run preview
-```
-
-## How to Run Tests
-
-```bash
-cd server
-npm test        # 21 tests: 5 auth + 11 readings + 5 reports… (see tests/)
-```
-
-Tests run against `DATABASE_URL_TEST` (`sweety_test`) and wipe it clean before each case —
-development data is never touched.
-
-## API Endpoint Documentation
-
-Base URL: `http://localhost:5000/api`. Protected routes need
-`Authorization: Bearer <JWT>`. Errors: `{ success: false, message }`.
-
-### Authentication
-
-| Method | Endpoint | Body | Notes |
-|--------|----------|------|-------|
-| POST | `/api/auth/register` | `{ name, email, password }` | 201 + `{ user, token }`; 409 duplicate email |
-| POST | `/api/auth/login` | `{ email, password }` | 200 + `{ user, token }`; 401 bad credentials |
-| GET | `/api/auth/me` | — | 200 current user (protected) |
-
-### Readings (all protected, strictly scoped to the JWT user)
-
-| Method | Endpoint | Body / Query | Notes |
-|--------|----------|--------------|-------|
-| GET | `/api/readings` | `?page&limit` optional | No params → full sorted list; with params → `{ data, pagination }` |
-| GET | `/api/readings/:id` | — | 404 if not yours |
-| POST | `/api/readings` | `{ readingDate: "2026-10-15", timeSlot: "AFTER_LUNCH", value: 145 }` | All 5 rules enforced; 409 duplicate slot |
-| PUT | `/api/readings/:id` | same as POST | Rules re-validated; 404 if not yours |
-| DELETE | `/api/readings/:id` | — | 404 if not yours |
-
-`timeSlot` ∈ `MORNING, AFTER_BREAKFAST, AFTER_LUNCH, AFTER_DINNER`.
-`readingDate` is a calendar `DATE` (`YYYY-MM-DD`), never a timestamp — no timezone shifting.
-
-### Reports (protected, user-isolated)
-
-| Method | Endpoint | Example |
-|--------|----------|---------|
-| GET | `/api/reports/daily?date=2026-10-15` | Stats + readings for that date |
-| GET | `/api/reports/month-to-date?date=2026-10-15` | Stats for Oct 1–15 |
-| GET | `/api/reports/monthly?date=2026-10-15` | Stats for full Sep 2026 |
-
-Response: `{ success, data: { date, dateRange: { start, end }, count, highest, lowest, average, readings, message? } }`.
-Empty range → `count: 0`, nulls for high/low/avg (never misleading zeros) + friendly message.
-
-## Demo Login Credentials
-
-| Email | Password | Data |
-|-------|----------|------|
-| demo@example.com | Demo@12345 | 13 curated readings (Nov/Oct/Sep 2026) |
-| anaya@example.com | Demo@12345 | ~135 readings, 45 days |
-| rahul@example.com | Demo@12345 | ~135 readings, 45 days |
-| priya@example.com | Demo@12345 | ~140 readings, 45 days |
-| arjun@example.com | Demo@12345 | ~90 readings, 30 days |
-| kavya@example.com | Demo@12345 | ~90 readings, 30 days |
-
-All seeded users share the password `Demo@12345`. Re-run `npm run db:seed` any time —
-it upserts, so it never duplicates users or readings.
+`timeSlot` ∈ `MORNING, AFTER_BREAKFAST, AFTER_LUNCH, AFTER_DINNER`. Empty ranges return `count: 0` with nulls (never fake zeros).
 
 ## Screenshots
 
 | Login | Register |
-|-------|----------|
+|---|---|
 | ![Login](screenshots/01-login.png) | ![Register](screenshots/02-register.png) |
 
 | Dashboard | Readings | Reports |
-|-----------|----------|---------|
+|---|---|---|
 | ![Dashboard](screenshots/03-dashboard.png) | ![Readings](screenshots/04-readings.png) | ![Reports](screenshots/05-reports.png) |
 
-## Assumptions and Limitations
+## Notes
 
-1. **Auth storage:** JWT in `localStorage` (per assignment's persistence requirement) rather
-   than httpOnly cookies — simpler for a decoupled Vite + Express demo; XSS hygiene is the
-   trade-off and is documented here.
-2. **Date handling:** `readingDate` is a pure calendar date compared lexicographically
-   (`YYYY-MM-DD`) against the server-local today; no time-of-day or timezone conversion.
-3. **Duplicate-slot wording:** the dynamic message uses the slot's friendly label
-   (e.g. `After lunch`), so casing varies by slot while matching the required format.
-4. **No refresh tokens / roles / Redis / BullMQ / doctor roles** — out of scope per the
-   assignment's bonus priority list; pagination + trend chart + Docker are implemented instead.
-5. Tests cover the backend only (React Testing Library left as future work).
-
-## Future Improvements
-
-- httpOnly-cookie auth + refresh-token rotation.
-- CSV export of readings; reminder notifications for missed slots.
-- Frontend tests (React Testing Library) + GitHub Actions CI.
-- Full Docker Compose for API + web (Postgres already composed).
-- HbA1c estimate card and 7/30-day rolling averages.
+- `readingDate` is a plain calendar `DATE` compared as `YYYY-MM-DD` — no timezone shifting.
+- Auth tokens live in `localStorage` per the assignment's persistence requirement (httpOnly cookies would be the production choice).
+- Out of scope by design: roles, Redis, queues, doctor accounts — see bonus priority list in the brief.
