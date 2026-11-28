@@ -78,6 +78,18 @@ Base `http://localhost:5000/api` · protected routes take `Authorization: Bearer
 
 ## Notes
 
-- `readingDate` is a plain calendar `DATE` compared as `YYYY-MM-DD` — no timezone shifting.
-- Auth tokens live in `localStorage` per the assignment's persistence requirement (httpOnly cookies would be the production choice).
-- Out of scope by design: roles, Redis, queues, doctor accounts — see bonus priority list in the brief.
+### Assumptions
+
+- Single-actor app: one patient account owns its readings. No sharing, no roles.
+- `readingDate` is a calendar `DATE` (not a timestamp), compared as `YYYY-MM-DD` against the server-local day — no timezone shifting by design.
+- Auth tokens live in `localStorage` per the brief's persistence requirement; httpOnly cookies would be the production choice.
+- Averages round to one decimal; empty ranges return nulls, never misleading zeros.
+- The duplicate-slot message uses the slot's friendly label, so its casing varies by slot.
+
+### With more time
+
+- Full Docker Compose (API + web, not just Postgres) and CI running lint + tests on push.
+- React Testing Library coverage for the frontend (backend is at 23 Jest tests).
+- CSV export of readings and a committed Postman collection.
+- Refresh-token rotation and tighter rate limits on auth endpoints.
+- Deliberately out of scope: roles, Redis, job queues, doctor accounts — no requirement needs them.
