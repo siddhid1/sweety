@@ -15,6 +15,8 @@ React 19 · Vite · Tailwind · React Router · Axios · Recharts — Express ·
 
 ## Quickstart
 
+Prereqs: Node ≥ 18, Docker (for Postgres).
+
 ```bash
 git clone https://github.com/siddhid1/sweety.git && cd sweety
 
@@ -25,10 +27,11 @@ docker compose up -d                                   # Postgres on :5433
 cp .env.example server/.env                            # then fill in secrets
 cd server && npm install && npx prisma migrate deploy && npm run db:seed && npm run dev
 
-# 3. Frontend (http://localhost:5173)
-cd client && npm install && npm run dev                # set VITE_API_URL in client/.env
+# 3. Frontend (http://localhost:5173) — new terminal, from repo root
+cp client/.env.example client/.env
+cd client && npm install && npm run dev
 
-# 4. Tests (separate sweety_test DB, dev data untouched)
+# 4. Tests (separate sweety_test DB, dev data untouched) — from repo root
 cd server && npm test                                  # 23 tests
 ```
 
